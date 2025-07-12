@@ -4,7 +4,6 @@
     "editor.insertSpaces": true,
     "editor.detectIndentation": false,
     "editor.formatOnSave": true,
-
     // === 파일별 언어 설정 ===
     "[javascript]": {
         "editor.tabSize": 4,
@@ -24,7 +23,6 @@
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "adpyke.vscode-sql-formatter"
     },
-
     // === SQL Formatter 설정 ===
     "sql-formatter.config": {
         "language": "mysql",

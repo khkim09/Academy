@@ -1,24 +1,28 @@
 // server/index.js
-require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const dotenv = require("dotenv");
+const db = require("./db");
 
+dotenv.config();
 const app = express();
-const port = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 
-// 라우트 등록
-const attendanceRoutes = require("./routes/attendance");
-const scoreRoutes = require("./routes/score");
+// DB 연결 테스트용 API
+app.get("/api/test-db", async (req, res) => {
+    try {
+        const [rows] = await db.query("SELECT NOW() as now");
+        res.json({ message: "DB 연결 성공!", time: rows[0].now });
+    } catch (err) {
+        console.error("DB 연결 오류:", err);
+        res.status(500).json({ message: "DB 연결 실패", error: err.message });
+    }
+});
 
-app.use("/api", attendanceRoutes);
-app.use("/api", scoreRoutes);
-
-// 서버 시작
-app.listen(port, () => {
-    console.log(`서버가 포트 ${port}번에서 실행 중`);
+app.listen(PORT, () => {
+    console.log(`✅ 서버가 포트 ${PORT}번에서 실행 중`);
 });
