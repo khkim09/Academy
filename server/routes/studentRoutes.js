@@ -1,4 +1,5 @@
-// server/routes/studentRoutes.js
+// /api/students 경로 처리
+
 const express = require("express");
 const router = express.Router();
 const db = require("../db");
@@ -22,11 +23,12 @@ router.post("/", async (req, res) => {
             "INSERT INTO students (name, phone, school) VALUES (?, ?, ?)",
             [name, phone, school]
         );
-        res.json({ id: result.insertId, name, phone, school });
+        res.status(201).json({ id: result.insertId, name, phone, school });
     } catch (err) {
-        res.status(500).json({ message: "DB 삽입 실패", error: err.message });
+        res.status(500).json({ error: "학생 추가 실패", details: err.message });
     }
 });
+
 
 // 학생 삭제
 router.delete("/:id", async (req, res) => {

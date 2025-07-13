@@ -1,0 +1,43 @@
+# Node modules (server & client)
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Dependency lock files (optional - useful to ignore for fresh installs)
+package-lock.json
+client/package-lock.json
+server/package-lock.json
+
+# Environment variable files
+.env
+client/.env
+server/.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# VSCode settings
+.vscode/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Build output (if used)
+dist/
+build/
+
+# IDE temporary files
+*.swp
+*.swo
+*.idea/
+*.iml
+*.log
+
+# Coverage reports (if testing with coverage tools)
+coverage/
+
+# React build output
+client/build/

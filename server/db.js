@@ -1,4 +1,5 @@
-// server/db.js
+// DB 연결 (MySQL)
+
 const mysql = require("mysql2/promise");
 require("dotenv").config();
 
