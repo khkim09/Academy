@@ -15,7 +15,7 @@ router.get("/", async (req, res) => {
     }
 });
 
-// 학생 추가
+// POST 요청 추가 (학생 추가)
 router.post("/", async (req, res) => {
     const { name, phone, school } = req.body;
     try {
@@ -29,16 +29,19 @@ router.post("/", async (req, res) => {
     }
 });
 
-
-// 학생 삭제
-router.delete("/:id", async (req, res) => {
-    const studentId = req.params.id;
-    try {
-        await db.query("DELETE FROM students WHERE id = ?", [studentId]);
-        res.json({ message: "삭제 성공" });
-    } catch (err) {
-        res.status(500).json({ message: "DB 삭제 실패", error: err.message });
-    }
+// DELETE 요청 추가 (학생 삭제)
+router.delete('/:id', (req, res) => {
+    const id = req.params.id;
+    const query = 'DELETE FROM students WHERE id = ?';
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Error deleting student:', err);
+            res.status(500).send('Error deleting student');
+        } else {
+            res.sendStatus(200);
+        }
+    });
 });
+
 
 module.exports = router;
