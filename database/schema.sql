@@ -5,39 +5,44 @@ CREATE DATABASE IF NOT EXISTS academy;
 USE academy;
 
 /*
- 1. 분반 관리를 위한 `classes` 테이블 생성
- - 프론트엔드에서 분반 목록을 동적으로 불러오고, 새로운 분반을 추가하는 기능을 위해 필요합니다.
- - class_name은 고유해야 하므로 UNIQUE 제약조건을 추가합니다.
+ [신설] 1. 분반별 학생 명단(Roster)을 위한 `class_rosters` 테이블
+ - 어떤 학생이 어떤 분반에 소속되어 있는지 영구적으로 관리합니다.
+ - '신규 등록' 기능은 이 테이블을 대상으로 학생을 추가/수정/삭제해야 합니다.
+ - (class_name, phone) 조합을 UNIQUE KEY로 설정하여 한 학생이 같은 분반에 중복 등록되는 것을 방지합니다.
  */
-CREATE TABLE IF NOT EXISTS classes (
+CREATE TABLE IF NOT EXISTS class_rosters (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    class_name VARCHAR(255) NOT NULL UNIQUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    class_name VARCHAR(255) NOT NULL,
+    student_name VARCHAR(50) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    school VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY `unique_roster_entry` (`class_name`, `phone`)
 );
 
 /*
- 2. 출결 관리를 위한 `attendance` 테이블 수정
- - (class_name, student_name, phone, date) 조합을 UNIQUE KEY로 설정합니다.
- - 이 제약조건은 특정 날짜에 한 학생의 출결 데이터가 중복으로 쌓이는 것을 방지하고,
- '저장' 버튼을 여러 번 눌러도 데이터가 하나로 유지되도록(INSERT 또는 UPDATE) 보장합니다.
+ 2. 기존 `attendance` 테이블 (역할 변경)
+ - 이제 이 테이블은 순수하게 '그날그날의 출결 상태'만 기록하는 용도로 사용됩니다.
  */
 CREATE TABLE IF NOT EXISTS attendance (
     id INT AUTO_INCREMENT PRIMARY KEY,
     class_name VARCHAR(255) NOT NULL,
     student_name VARCHAR(50) NOT NULL,
-    school VARCHAR(50),
     phone VARCHAR(20) NOT NULL,
     date DATE NOT NULL,
     status ENUM('출석', '결석') NOT NULL,
-    -- 이 부분이 수정/추가된 핵심 제약조건입니다.
-    UNIQUE KEY `unique_attendance_record` (`class_name`, `student_name`, `phone`, `date`)
+    -- 이 키는 동일한 학생이 같은 날짜에 중복 기록되는 것을 방지합니다.
+    UNIQUE KEY `unique_attendance_record` (`class_name`, `phone`, `date`)
 );
 
--- 만약 이미 `attendance` 테이블을 생성했다면 아래의 ALTER 구문을 실행하여 UNIQUE KEY를 추가할 수 있습니다.
--- ALTER TABLE attendance ADD UNIQUE KEY `unique_attendance_record` (`class_name`, `student_name`, `phone`, `date`);
 /*
- 기존 scores, students 테이블 (변경 없음)
+ 기존 classes, scores, students 테이블 (변경 없음)
  */
+CREATE TABLE IF NOT EXISTS classes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    class_name VARCHAR(255) NOT NULL UNIQUE
+);
+
 CREATE TABLE IF NOT EXISTS scores (
     id INT AUTO_INCREMENT PRIMARY KEY,
     class_name VARCHAR(50),
@@ -50,14 +55,12 @@ CREATE TABLE IF NOT EXISTS scores (
     wrong_questions TEXT,
     assignment1 CHAR(1),
     assignment2 CHAR(1),
-    memo TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    memo TEXT
 );
 
 CREATE TABLE IF NOT EXISTS students (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     phone VARCHAR(20),
-    school VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    school VARCHAR(100)
 );

@@ -8,7 +8,9 @@ const db = require('../db');
 // GET: 모든 분반 목록 불러오기
 router.get('/classes', async (req, res) => {
     try {
-        const [rows] = await db.query('SELECT class_name FROM classes ORDER BY class_name ASC');
+        const [rows] = await db.query(
+            'SELECT class_name FROM classes ORDER BY class_name ASC'
+        );
         const classNames = rows.map(row => row.class_name);
         res.json(classNames);
     } catch (err) {
@@ -17,7 +19,7 @@ router.get('/classes', async (req, res) => {
     }
 });
 
-// POST: 새 분반 추가하기
+// POST: 새 분반 추가하기 ('신규 등록' 페이지에서 사용될 API)
 router.post('/classes', async (req, res) => {
     const { className } = req.body;
     if (!className) {
@@ -25,7 +27,9 @@ router.post('/classes', async (req, res) => {
     }
 
     try {
-        await db.query('INSERT INTO classes (class_name) VALUES (?)', [className]);
+        await db.query(
+            'INSERT INTO classes (class_name) VALUES (?)', [className]
+        );
         res.status(201).json({ message: '분반이 성공적으로 추가되었습니다.' });
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
@@ -38,7 +42,7 @@ router.post('/classes', async (req, res) => {
 
 // --- 출결 관리 ---
 
-// 출결 정보 저장 (트랜잭션 및 Deprecated 구문 수정 적용)
+// 출결 정보 저장 (트랜잭션 및 별칭 사용)
 router.post('/save', async (req, res) => {
     const { records } = req.body;
     if (!records || !Array.isArray(records)) {
@@ -51,18 +55,15 @@ router.post('/save', async (req, res) => {
 
         const promises = records.map(record => {
             const { class_name, student_name, school, phone, date, status } = record;
-            if (!class_name || !student_name || !school || !phone || !date || !status) {
-                throw new Error('필수 필드가 누락된 항목이 있습니다.');
-            }
-
-            // [수정된 부분] VALUES() 대신 별칭 'new_record'를 사용하는 최신 방식으로 변경
             const sql = `
-        INSERT INTO attendance (class_name, student_name, school, phone, date, status)
-        VALUES (?, ?, ?, ?, ?, ?)
-        AS new_record
-        ON DUPLICATE KEY UPDATE status = new_record.status, school = new_record.school`;
+                INSERT INTO attendance (class_name, student_name, school, phone, date, status)
+                VALUES (?, ?, ?, ?, ?, ?)
+                AS new_record
+                ON DUPLICATE KEY UPDATE status = new_record.status, school = new_record.school
+            `;
 
-            return connection.query(sql, [class_name, student_name, school, phone, date, status]);
+            return connection.query(sql,
+                [class_name, student_name, school, phone, date, status]);
         });
 
         await Promise.all(promises);
@@ -77,18 +78,49 @@ router.post('/save', async (req, res) => {
     }
 });
 
-// 출결 정보 불러오기 (분반 + 날짜)
+// 출결 정보 불러오기 (분반 + 날짜) + 전체 분반 한 번에 조회
 router.get('/get', async (req, res) => {
     const { class_name, date } = req.query;
-    if (!class_name || !date) {
-        return res.status(400).json({ error: '분반 및 날짜는 필수입니다.' });
-    }
+    if (!date) return res.status(400).json({ error: '날짜는 필수입니다.' });
 
     try {
-        const [rows] = await db.query(
-            `SELECT student_name, phone, school, status FROM attendance WHERE class_name=? AND date=?`,
-            [class_name, date]
-        );
+        let query;
+        const params = [date];
+
+        // '전체 분반' 또는 '특정 분반'에 따라 분기
+        if (class_name === '전체 분반') {
+            query = `
+                SELECT
+                    r.class_name,
+                    r.student_name,
+                    r.phone,
+                    r.school,
+                COALESCE(a.status, '결석') AS status
+                FROM class_rosters AS r
+                LEFT JOIN attendance AS a
+                ON r.class_name = a.class_name AND r.phone = a.phone AND a.date = ?
+                ORDER BY r.class_name, r.student_name;
+            `;
+        } else if (class_name) {
+            query = `
+                SELECT
+                    r.class_name,
+                    r.student_name,
+                    r.phone,
+                    r.school,
+                COALESCE(a.status, '결석') AS status
+                FROM class_rosters AS r
+                LEFT JOIN attendance AS a
+                ON r.class_name = a.class_name AND r.phone = a.phone AND a.date = ?
+                WHERE r.class_name = ?
+                ORDER BY r.student_name;
+            `;
+            params.push(class_name);
+        } else {
+            return res.json([]);
+        }
+
+        const [rows] = await db.query(query, params);
         res.json(rows);
     } catch (err) {
         console.error('출결 조회 오류:', err);
