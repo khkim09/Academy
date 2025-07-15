@@ -1,5 +1,4 @@
 // DB 연결 (MySQL)
-
 const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
 
@@ -12,7 +11,9 @@ const pool = mysql.createPool({
     database: process.env.DB_NAME || "academy",
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    // ON DUPLICATE KEY UPDATE를 사용하려면 date 형식 호환을 위해 추가
+    dateStrings: true
 });
 
 module.exports = pool;
