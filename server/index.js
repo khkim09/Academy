@@ -11,9 +11,15 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// ✅ 여기에 라우터 등록
+// 라우터 등록
+
+// 1. 출결 관리용 라우터
 const attendanceRoutes = require('./routes/attendance');
 app.use('/api/attendance', attendanceRoutes);
+
+// 2. 성적 입력용 라우터
+const scoreRoutes = require('./routes/scores');
+app.use('/api/scores', scoreRoutes);
 
 app.get('/', (req, res) => {
     res.send('API 서버가 정상 작동 중입니다.');
