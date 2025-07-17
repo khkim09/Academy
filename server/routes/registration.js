@@ -21,35 +21,36 @@ router.post('/upload-roster', upload.single('rosterFile'), async (req, res) => {
         let totalAdded = 0;
         let sheetsProcessed = 0;
 
+        // 모든 시트를 순회합니다.
         for (const sheetName of workbook.SheetNames) {
-            // [핵심 수정] 시트 이름을 기준으로 classes 테이블에 분반을 먼저 등록 (없으면 생성, 있으면 무시)
+            // 시트 이름을 기준으로 classes 테이블에 분반을 먼저 등록합니다 (없으면 생성).
             await connection.query('INSERT IGNORE INTO classes (class_name) VALUES (?)', [sheetName]);
 
             sheetsProcessed++;
 
             const worksheet = workbook.Sheets[sheetName];
-            const students = xlsx.utils.sheet_to_json(worksheet, { defval: "" }); // 빈 셀도 처리
+            const students = xlsx.utils.sheet_to_json(worksheet, { defval: "" });
 
             if (students.length === 0) continue;
 
-            totalProcessed += students.length;
+            const validStudents = students.filter(student => student['이름'] && student['전화번호']);
+            totalProcessed += validStudents.length;
 
-            const values = students
-                .filter(student => student['이름'] && student['전화번호']) // 이름과 전화번호가 모두 있는 데이터만 필터링
-                .map(student => [
-                    sheetName,
-                    student['이름'],
-                    String(student['전화번호']).trim(),
-                    student['학교'] || ''
-                ]);
+            if (validStudents.length === 0) continue;
 
-            if (values.length === 0) continue;
+            const values = validStudents.map(student => [
+                sheetName,
+                student['이름'],
+                String(student['전화번호']).trim(),
+                student['학교'] || ''
+            ]);
 
             const sql = 'INSERT IGNORE INTO class_rosters (class_name, student_name, phone, school) VALUES ?';
             const [result] = await connection.query(sql, [values]);
             totalAdded += result.affectedRows;
         }
 
+        // [핵심 수정] 모든 시트 처리가 끝난 후, 마지막에 한번만 commit하고 응답을 보냅니다.
         await connection.commit();
 
         res.status(200).json({
