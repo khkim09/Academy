@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS attendance (
     student_name VARCHAR(50) NOT NULL,
     phone VARCHAR(20) NOT NULL,
     date DATE NOT NULL,
-    status ENUM('출석', '결석') NOT NULL,
+    status ENUM('O', 'X') NOT NULL,
     UNIQUE KEY `unique_attendance_record` (`class_name`, `phone`, `date`)
 );
 
