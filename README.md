@@ -6,4 +6,10 @@
 * 배포 - 추후 지정
 
 
-### 다운로드 및 사용법
+### 주의 사항
+1. 로컬 테스트를 위해서는 다음 코드 작성 필요
+    > client/package.json
+    
+    ``` json
+    "proxy": "http://localhost:5000"
+    ```

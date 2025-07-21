@@ -8,7 +8,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+const corsOptions = {
+    // .env 파일의 CORS_ORIGIN 값을 사용합니다.
+    // 배포 환경(Render)에서는 Render에 설정된 환경 변수 값을 사용합니다.
+    origin: process.env.CORS_ORIGIN,
+    credentials: true, // 필요 시 쿠키/인증 헤더 교환을 허용
+};
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // 라우터 등록
